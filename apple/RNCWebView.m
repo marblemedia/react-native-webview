@@ -236,6 +236,7 @@ static NSDictionary* customCertificatesForHost;
     wkWebViewConfig.processPool = [[RNCWKProcessPoolManager sharedManager] sharedProcessPool];
   }
   wkWebViewConfig.userContentController = [WKUserContentController new];
+  [wkWebViewConfig setURLSchemeHandler:self forURLScheme:@"static-file"];
 
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 /* iOS 13 */
   if (@available(iOS 13.0, *)) {
@@ -277,6 +278,52 @@ static NSDictionary* customCertificatesForHost;
   }
 
   return wkWebViewConfig;
+}
+
+- (void)webView:(WKWebView *)webView startURLSchemeTask:(id <WKURLSchemeTask>)task {
+    NSURL* url = task.request.URL;
+    NSString *path = [url path];
+    NSData* data = [NSData dataWithContentsOfFile: path];
+    NSString *mimEtype = [self mimeTypeForData:data];
+    NSURLResponse* response = [[NSURLResponse alloc] initWithURL:url MIMEType:mimEtype
+                                           expectedContentLength:[data length] textEncodingName:nil];
+    NSLog(@"received static-file: url %@ len %lu", path, (unsigned long)data.length);
+    [task didReceiveResponse:response];
+    [task didReceiveData:data];
+    [task didFinish];
+}
+
+- (NSString *)mimeTypeForData:(NSData *)data {
+    uint8_t c;
+    [data getBytes:&c length:1];
+
+    switch (c) {
+        case 0xFF:
+            return @"image/jpeg";
+            break;
+        case 0x89:
+            return @"image/png";
+            break;
+        case 0x47:
+            return @"image/gif";
+            break;
+        case 0x49:
+        case 0x4D:
+            return @"image/tiff";
+            break;
+        case 0x25:
+            return @"application/pdf";
+            break;
+        case 0xD0:
+            return @"application/vnd";
+            break;
+        case 0x46:
+            return @"text/plain";
+            break;
+        default:
+            return @"application/octet-stream";
+    }
+    return nil;
 }
 
 - (void)didMoveToWindow

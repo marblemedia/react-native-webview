@@ -92,6 +92,8 @@
 #if !TARGET_OS_OSX
 - (void)addPullToRefreshControl;
 - (void)pullToRefresh:(UIRefreshControl *_Nonnull)refreshControl;
+- (void)evaluateJS:(NSString *)js
+          thenCall: (void (^)(NSString*)) callback;
 #endif
 
 @end

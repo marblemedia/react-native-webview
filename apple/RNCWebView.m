@@ -243,7 +243,7 @@ static NSDictionary* customCertificatesForHost;
     WKWebpagePreferences *pagePrefs = [[WKWebpagePreferences alloc]init];
     pagePrefs.preferredContentMode = _contentMode;
     wkWebViewConfig.defaultWebpagePreferences = pagePrefs;
-  }
+  } 
 #endif
 
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 140000 /* iOS 14 */
@@ -287,7 +287,6 @@ static NSDictionary* customCertificatesForHost;
     NSString *mimEtype = [self mimeTypeForData:data];
     NSURLResponse* response = [[NSURLResponse alloc] initWithURL:url MIMEType:mimEtype
                                            expectedContentLength:[data length] textEncodingName:nil];
-    NSLog(@"received static-file: url %@ len %lu", path, (unsigned long)data.length);
     [task didReceiveResponse:response];
     [task didReceiveData:data];
     [task didFinish];

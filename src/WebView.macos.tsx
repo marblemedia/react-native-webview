@@ -38,9 +38,8 @@ const { resolveAssetSource } = Image;
 
 const RNCWebViewManager = NativeModules.RNCWebViewManager as ViewManager;
 
-const RNCWebView: typeof NativeWebViewMacOS = requireNativeComponent(
-  'RNCWebView',
-);
+const RNCWebView: typeof NativeWebViewMacOS =
+  requireNativeComponent('RNCWebView');
 
 class WebView extends React.Component<MacOSWebViewProps, State> {
   static defaultProps = {
@@ -139,6 +138,14 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     );
   };
 
+  saveSnapshot = (path: string) => {
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      this.getCommands().saveSnapshot,
+      [String(path)],
+    );
+  };
+
   /**
    * Injects a javascript string into the referenced WebView. Deliberately does not
    * return a response because using eval() to return a response breaks this method
@@ -189,7 +196,7 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     } else {
       console.warn('Encountered an error loading page', event.nativeEvent);
     }
-    
+
     if (onLoadEnd) {
       onLoadEnd(event);
     }
@@ -206,7 +213,7 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     if (onHttpError) {
       onHttpError(event);
     }
-  }
+  };
 
   onLoadingFinish = (event: WebViewNavigationEvent) => {
     const { onLoad, onLoadEnd } = this.props;
@@ -241,9 +248,9 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     _url: string,
     lockIdentifier: number,
   ) => {
-    const viewManager
-      = (this.props.nativeConfig && this.props.nativeConfig.viewManager)
-      || RNCWebViewManager;
+    const viewManager =
+      (this.props.nativeConfig && this.props.nativeConfig.viewManager) ||
+      RNCWebViewManager;
 
     viewManager.startLoadWithResult(!!shouldStart, lockIdentifier);
   };
@@ -313,9 +320,9 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
       onShouldStartLoadWithRequestProp,
     );
 
-    const NativeWebView
-      = (nativeConfig.component as typeof NativeWebViewMacOS | undefined)
-      || RNCWebView;
+    const NativeWebView =
+      (nativeConfig.component as typeof NativeWebViewMacOS | undefined) ||
+      RNCWebView;
 
     const webView = (
       <NativeWebView

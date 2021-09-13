@@ -112,6 +112,33 @@ RCT_EXPORT_METHOD(postMessage:(nonnull NSNumber *)reactTag message:(NSString *)m
   }];
 }
 
+RCT_EXPORT_METHOD(saveSnapshot:(nonnull NSNumber *)reactTag
+                  path:(NSString *)path
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [self.bridge.uiManager addUIBlock:^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, RNCWebView *> *viewRegistry) {
+      RNCWebView *view = viewRegistry[reactTag];
+      if (![view isKindOfClass:[RNCWebView class]]) {
+        RCTLogError(@"Invalid view returned from registry, expecting RNCWebView, got: %@", view);
+      } else {
+        WKWebView *webView = [view subviews][0];
+          [webView takeSnapshotWithConfiguration:nil completionHandler:^(UIImage * _Nullable snapshotImage, NSError * _Nullable error) {
+              if (error != nil) {
+                  reject(@"SNAPSHOT_FAIL", @"failed saving snapshot", nil);
+                  return;
+              }
+              NSData* data = UIImagePNGRepresentation(snapshotImage);
+              [data writeToFile:path atomically:YES];
+              CGSize imageSize = snapshotImage.size;
+              resolve(@{@"width": [NSNumber numberWithFloat:imageSize.width],
+                        @"height": [NSNumber numberWithFloat:imageSize.height]});
+          }];
+      }
+    }];
+}
+
+
 RCT_CUSTOM_VIEW_PROPERTY(pullToRefreshEnabled, BOOL, RNCWebView) {
     view.pullToRefreshEnabled = json == nil ? false : [RCTConvert BOOL: json];
 }

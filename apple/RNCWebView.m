@@ -373,7 +373,18 @@ static NSDictionary* customCertificatesForHost;
     [self setHideKeyboardAccessoryView: _savedHideKeyboardAccessoryView];
     [self setKeyboardDisplayRequiresUserAction: _savedKeyboardDisplayRequiresUserAction];
     [self visitSource];
+    [self disableLongPress];
   }
+}
+
+- (void)disableLongPress {
+    for (UIView *view in _webView.scrollView.subviews) {
+        for (UIGestureRecognizer *gr in view.gestureRecognizers) {
+            if ([gr isKindOfClass:[UILongPressGestureRecognizer class]]) {
+                gr.enabled = NO;
+            }
+        }
+    }
 }
 
 // Update webview property when the component prop changes.

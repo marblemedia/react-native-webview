@@ -138,11 +138,11 @@ class WebView extends React.Component<MacOSWebViewProps, State> {
     );
   };
 
-  saveSnapshot = (path: string) => {
+  saveSnapshot = (path: string, asPNG?: boolean) => {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
       this.getCommands().saveSnapshot,
-      [String(path)],
+      [String(path), Boolean(asPNG)],
     );
   };
 

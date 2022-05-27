@@ -52,7 +52,7 @@ declare class WebView extends React.Component<MacOSWebViewProps, State> {
      * ```
      */
     postMessage: (data: string) => void;
-    saveSnapshot: (path: string) => void;
+    saveSnapshot: (path: string, asPNG?: boolean | undefined) => void;
     /**
      * Injects a javascript string into the referenced WebView. Deliberately does not
      * return a response because using eval() to return a response breaks this method

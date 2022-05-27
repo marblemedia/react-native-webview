@@ -143,7 +143,7 @@ export interface WebViewSourceHtml {
 export declare type WebViewSource = WebViewSourceUri | WebViewSourceHtml;
 export interface ViewManager {
     startLoadWithResult: Function;
-    saveSnapshot: (nodeId: number, path: string) => Promise<string>;
+    saveSnapshot: (nodeId: number, path: string, asPNG?: boolean) => Promise<string>;
 }
 export interface WebViewNativeConfig {
     /**

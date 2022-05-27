@@ -11,6 +11,73 @@
 #import <React/RCTDefines.h>
 #import "RNCWebView.h"
 
+@implementation UIImage (AJKImageWithPDF)
+
++ (UIImage *)imageWithPDFNamed:(NSString *)pdfName
+{
+    return [UIImage imageWithPDFNamed:pdfName scale:0];
+}
+
+
++ (UIImage *)imageWithPDFNamed:(NSString *)pdfName scale:(CGFloat)scale
+{
+    if(!pdfName || [pdfName length] == 0)
+        return nil;
+    
+//    NSURL *imageURL = [[NSBundle mainBundle] URLForResource:pdfName withExtension:@"pdf"];
+    NSURL *imageURL = [NSURL fileURLWithPath:pdfName];
+    if(!imageURL) {
+        NSLog(@"Couldn't find a PDF document named: %@", pdfName);
+        return nil;
+    }
+    
+    // Load the pdf
+    CGPDFDocumentRef pdfDocument = CGPDFDocumentCreateWithURL((__bridge CFURLRef)imageURL);
+    if(!pdfDocument) {
+        NSLog(@"Couldn't load the PDF document named: %@", pdfName);
+        return nil;
+    }
+    
+    CGPDFPageRef firstPage = CGPDFDocumentGetPage(pdfDocument, 1);
+    if(!firstPage) {
+        NSLog(@"Couldn't find any pages for the PDF document named: %@", pdfName);
+        CGPDFDocumentRelease(pdfDocument);
+        return nil;
+    }
+    
+    CGSize imageSize = CGPDFPageGetBoxRect(firstPage, kCGPDFCropBox).size;
+    
+    // Scale the image by the
+    if(scale < 0.00001f)
+        scale = [[UIScreen mainScreen] scale];
+    
+    imageSize.width *= scale;
+    imageSize.height *= scale;
+    
+    
+    // Setup a graphics context to draw into
+    UIGraphicsBeginImageContext(imageSize);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    // Flip the context so that the image draws the right way up
+    CGContextTranslateCTM(context, 0, imageSize.height);
+    CGContextScaleCTM(context, scale, -scale);
+    
+    // Draw the pdf into the context
+    CGContextDrawPDFPage(context, firstPage);
+    
+    // Create an image from the context
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    CGPDFDocumentRelease(pdfDocument);
+    
+    return image;
+}
+
+
+@end
+
 @interface RNCWebViewManager () <RNCWebViewDelegate>
 @end
 
@@ -114,6 +181,7 @@ RCT_EXPORT_METHOD(postMessage:(nonnull NSNumber *)reactTag message:(NSString *)m
 
 RCT_EXPORT_METHOD(saveSnapshot:(nonnull NSNumber *)reactTag
                   path:(NSString *)path
+                  asPNG:(BOOL)asPNG
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -123,17 +191,37 @@ RCT_EXPORT_METHOD(saveSnapshot:(nonnull NSNumber *)reactTag
         RCTLogError(@"Invalid view returned from registry, expecting RNCWebView, got: %@", view);
       } else {
         WKWebView *webView = [view subviews][0];
-          [webView takeSnapshotWithConfiguration:nil completionHandler:^(UIImage * _Nullable snapshotImage, NSError * _Nullable error) {
-              if (error != nil) {
-                  reject(@"SNAPSHOT_FAIL", @"failed saving snapshot", nil);
-                  return;
-              }
-              NSData* data = UIImagePNGRepresentation(snapshotImage);
-              [data writeToFile:path atomically:YES];
-              CGSize imageSize = snapshotImage.size;
-              resolve(@{@"width": [NSNumber numberWithFloat:imageSize.width],
-                        @"height": [NSNumber numberWithFloat:imageSize.height]});
-          }];
+          if (@available(iOS 14.0, *)) {
+              [webView createPDFWithConfiguration:nil completionHandler:^(NSData * _Nullable data, NSError * _Nullable error) {
+                  if (error != nil) {
+                      reject(@"SNAPSHOT_FAIL", @"failed saving snapshot", nil);
+                      return;
+                  }
+                  [data writeToFile:path atomically:YES];
+                  if (!asPNG) {
+                      resolve(@"saved");
+                      return;
+                  }
+                  
+                  UIImage *pdfImage;
+                  
+                  @try {
+                      pdfImage = [UIImage imageWithPDFNamed:path];
+                      data = UIImagePNGRepresentation(pdfImage);
+                      [data writeToFile:[NSString stringWithFormat:@"%@.png", path] atomically:YES];
+                    
+                      CGSize imageSize = pdfImage.size;
+                      resolve(@{@"width": [NSNumber numberWithFloat:imageSize.width],
+                                @"height": [NSNumber numberWithFloat:imageSize.height]});
+                  } @catch (NSException *exception) {
+                      reject(@"SNAPSHOT_FAIL", exception.description, nil);
+                      return;
+                  }
+              }];
+          } else {
+              // Fallback on earlier versions
+              reject(@"SNAPSHOT_FAIL", @"Unsupported OS Version", nil);
+          }
       }
     }];
 }

@@ -50,7 +50,7 @@ declare class WebView<P = {}> extends Component<WebViewProps & P> {
    * (iOS only)
    * Stores a snapshot of the webview and returns {width, height}
    */
-  saveSnapshot: (path: string) => Promise<any>;
+  saveSnapshot: (path: string, asPNG?: boolean) => Promise<any>;
 
   /**
    * (Android only)

@@ -150,10 +150,11 @@ class WebView extends React.Component<IOSWebViewProps, State> {
     );
   };
 
-  saveSnapshot = (path: string): Promise<any> => {
+  saveSnapshot = (path: string, asPNG?: boolean): Promise<any> => {
     return RNCWebViewManager.saveSnapshot(
       this.getWebViewHandle(),
       String(path),
+      Boolean(asPNG),
     );
   };
 

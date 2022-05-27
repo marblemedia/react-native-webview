@@ -1223,6 +1223,11 @@ static NSDictionary* customCertificatesForHost;
   [self evaluateJS: script thenCall: nil];
 }
 
+- (void)injectJavaScript:(NSString *)script thenCall: (void (^)(NSString*)) callback
+{
+  [self evaluateJS: script thenCall: callback];
+}
+
 - (void)goForward
 {
   [_webView goForward];
